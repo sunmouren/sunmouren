@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+{% load confession_tags %}
+
+
+{% block header %}
+    <div class="panel panel-danger">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <span>{{ confession.motion }}</span>
+                    <span>{{ confession.name }}</span>
+                    <span class="pull-right">{{ confession.created|date:'Y-m-j' }}</span>
+                </h3>
+            </div>
+            <div class="panel-body">
+                {{ confession.content }}
+            </div>
+        </div>
+{% endblock %}
+
+{% block content %}
+
+    <div class="confession-comment-list">
+        {% get_comment_form as form %}
+        <!--new comment-->
+        <div>
+           {% if request.user.is_authenticated %}
+                <form class="new-comment" action=".">
+                    {% csrf_token %}
+                    {% bootstrap_form form %}
+                    <div class="submit-function-block">
+                        <a class="btn btn-success send pull-right" data-id="{{ confession.id }}" role="button">发送</a>
+                        <a class="btn btn-default cancel pull-right" role="button">取消</a>
+                    </div>
+                 </form>
+            {% else %}
+                <div class="jumbotron no-reply">
+                    <h4>为防止恶意行为，请登入后发表评论，但在这里不记录任何用户信息！</h4>
+                </div>
+            {% endif %}
+        </div>
+        <!--normal-comment-list-->
+        <div id="normal-comment-list" class="normal-comment-list">
+            {% get_comment_list confession as comments %}
+            {% if comments.count > 0 %}
+                <div class="top-title">
+                    <span>{{ comments.count }}</span>
+                    <span>条评论</span>
+                </div>
+            {% endif %}
+
+            {% for comment in comments %}
+                <!--comment-->
+                <div id="comment-{{ comment.id }}" class="comment">
+                    <div class="comment-content">
+                       <p>
+                           <span>{{ forloop.counter }}</span>
+                           <span>楼</span>
+                       </p>
+                        <p>{{ comment.content }}</p>
+                    </div>
+                     <div class="tool-group">
+                        <span>
+                            {{ comment.created|timesince }}前
+                        </span>
+                        <span style="margin-left: 8px">
+                            <a class="reply-button text-muted {% if not request.user.is_authenticated %}no-login{% endif %}" data-comment="{{ comment.id }}">
+                             <small><span class="glyphicon glyphicon-comment"></span></small>
+                            </a>
+                         <small>回复</small>
+                        </span>
+                     </div>
+
+                     <!--normal-reply-list-->
+                    {% get_reply_list comment as replies %}
+                    {% if replies.count > 0 %}
+                         <div class="normal-reply-list">
+                        {% for reply in replies %}
+                            <div id="reply-{{ reply.id }}" class="reply">
+                            <div class="reply-content">
+                                <p>
+                                    <span>小{{ forloop.counter }}楼:</span>
+                                    <span>{{ reply.content }}</span>
+                                </p>
+                            </div>
+                            <div class="reply-tool-group">
+                                <span>
+                                    {{ reply.created|timesince }}前
+                                </span>
+                                <span style="margin-left: 8px">
+                                    <a class="reply-button text-muted {% if not request.user.is_authenticated %}no-login{% endif %}" data-comment="{{ comment.id }}">
+                                        <small><span class="glyphicon glyphicon-comment"></span></small>
+                                    </a>
+                                    <small>回复</small>
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                            <div class="reply-form">
+                                {% include 'confession_wall/reply_form.html' %}
+                             </div>
+                        </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <style type="text/css">
+         .top-title{
+                padding-bottom: 18px;
+                font-size: 17px;
+                font-weight: 700;
+                border-bottom: 1px solid #f0f0f0;
+            }
+        .submit-function-block{
+                display: none;
+        }
+         .cancel, .reply-cancel{
+             margin-right: 18px;
+         }
+        .normal-comment-list{
+            margin-top: 40px;
+        }
+        .comment{
+            padding: 20px 0 30px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .normal-reply-list{
+                margin-top: 20px;
+                padding: 5px 0 5px 20px;
+                border-left: 2px solid #d9d9d9;
+        }
+        .reply{
+                margin-bottom: 15px;
+                padding-bottom: 15px;
+                border-bottom: 1px dashed #f0f0f0;
+        }
+        .reply-form{
+            display: none;
+        }
+         .reply-tool-group{
+             font-size: 12px;
+             color: #969696;
+         }
+         .reply-button{
+             margin-left: 10px;
+             color: #969696;
+         }
+        .reply-form{
+            padding-bottom: 10px;
+            padding-top: 5px;
+        }
+    </style>
+
+    <script>
+        $(window).load(function () {
+            if(sessionStorage.getItem('anchor')){
+                var offtop = sessionStorage.getItem('new_comment_location');
+                alert(offtop);
+                $(document).scrollTop(offtop);
+                window.location.hash = sessionStorage.getItem('new_comment_location');
+                sessionStorage.removeItem('anchor');
+            }
+        });
+        $.ajaxSetup({
+            data: { csrfmiddlewaretoken: '{{ csrf_token }}' },
+        });
+        $(document).ready(function () {
+            // new-comment
+            $("form.new-comment").focusin(function () {
+                $this = $(this);
+                $this.find(".submit-function-block").show();
+                $this.find(".cancel").click(function () {
+                    $this.find(".submit-function-block").hide();
+                    $this.find("textarea").val('');
+                });
+                // submit comment
+                $this.find(".send").click(function (e) {
+                    e.preventDefault();
+                    var id = $(this).data("id");
+                    var content = $this.find("textarea").val();
+                    if (content.length == 0){
+                        alert("评论不能为空！！");
+                        window.location.reload();
+                        return false;
+                    }
+                    // use jquery post method
+                    $.post("{% url 'confession_wall:submit_confession_comment' %}",{
+                        id: id,
+                        content: content
+                    },
+                    function(data) {
+                        if (data['status'] == 'ok'){
+                            sessionStorage.setItem('anchor', true);
+                            sessionStorage.setItem('new_comment_location', data['new_comment_location']);
+                            window.location.reload();
+                        }else {
+                            alert("评论出错");
+                            window.location.reload();
+                            return false;
+                        }
+                    });
+                });
+            });
+
+            // reply-form
+            $("a.reply-button").click(function () {
+                $reply_button = $(this);
+                if ($reply_button.hasClass('no-login')){
+                    alert('为防止恶意行为，请登入后执行，但在这里不记录任何用户信息！');
+                    return false;
+                }
+
+                var comment_id = "#comment-" + $reply_button.data('comment');
+
+                $reply_form = $(comment_id).find(".reply-form");
+                $reply_form.fadeToggle();
+                $reply_form.find(".reply-cancel").click(function () {
+                    $reply_form.find("textarea").val('');
+                    $reply_form.fadeOut();
+                });
+                // submit reply
+                $reply_form.find(".reply-send").click(function (e) {
+                    e.preventDefault();
+                    var comment_id = $reply_button.data('comment');
+                    var content = $reply_form.find("textarea").val();
+                    if (content.length == 0){
+                        alert("回复不能为空！！");
+                        window.location.reload();
+                        return false;
+                    }
+                    // use jquery post method
+                    $.post("{% url 'confession_wall:submit_reply_comment' %}", {
+                        comment_id: comment_id,
+                        content: content
+                    },function (data) {
+                        if(data['status'] == 'ok'){
+                            window.location.reload();
+                        }else {
+                            alert("回复出错");
+                            window.location.reload();
+                            return false;
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+{% endblock %}
+

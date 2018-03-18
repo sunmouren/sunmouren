@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block header %}
+    <h2>写文章</h2>
+{% endblock %}
+
+{% block content %} 
+   <form action="{% url 'forum:new_post' %}" method='post' class="form">
+
+    {% csrf_token %}
+    {% bootstrap_form form %}
+
+    {% buttons %}
+      <button name="submit" class="btn btn-primary">发布</button>
+    {% endbuttons %}
+
+  </form>
+{% endblock %}
+
+{% block sidebar %}
+    <h3>编辑器支持 Markdown</h3>
+    <a href="http://md.ityouknow.com/">一分钟快速学会使用Markdown</a>
+
+{% endblock %}

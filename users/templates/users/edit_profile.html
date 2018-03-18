@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block header %}
+
+    <h3><img class="img-circle" src="{{ request.user.avatar.url }}">
+     {% if request.user.nickname %}
+      {{ request.user.nickname }}
+      {% else %}
+      {{ request.user.username }}
+      {% endif %}
+      个人资料</h3>
+
+{% endblock %}
+
+{% block content %}
+
+  <form method="post" enctype="multipart/form-data" action="{% url 'users:edit_profile' %}" class="form">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+
+    {% buttons %}
+      <button name="submit" class="btn btn-primary">更新资料</button>
+    {% endbuttons %}
+
+  </form>
+
+{% endblock content %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+{% load confession_tags %}
+
+{% block header %}
+    <h3>表白墙 <a class="btn btn-default btn-success new-confession-btn pull-right {% if not request.user.is_authenticated %}no-login{% endif %}">
+        <span class="glyphicon glyphicon-pencil"></span>
+        <span>写信</span>
+    </a></h3>
+
+{% endblock %}
+
+{% block content %}
+     <div>
+        {% get_new_confession_form as form %}
+        <form class="new-confession-form" action=".">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            <div class="submit-function-block">
+                <a class="btn btn-success send  pull-right" data-id="{{ confession.id }}" role="button">发送</a>
+                <a class="btn btn-default cancel pull-right" role="button">取消</a>
+            </div>
+        </form>
+    </div>
+   {% for confession in confessions %}
+         <div class="panel panel-danger">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <span>{{ confession.motion }}</span>
+                    <span>{{ confession.name }}
+                    <span>{{ confession.created|date:'Y-m-d' }}</span>
+                    <span class="pull-right">
+                        <a href="{{ confession.get_absolute_url }}" class="text-muted">
+                            <span class="glyphicon glyphicon-comment"></span>
+                        </a>
+                    </span>
+                </h3>
+
+            </div>
+
+            <div class="panel-body">
+                {{ confession.content }}
+            </div>
+
+        </div>
+   {% endfor %}
+
+    <style type="text/css">
+        .new-confession-form{
+            display: none;
+            margin-bottom: 80px;
+        }
+        .cancel{
+            margin-right: 18px;
+        }
+    </style>
+
+    <script>
+        $.ajaxSetup({
+            data: { csrfmiddlewaretoken: '{{ csrf_token }}' },
+        });
+        $(document).ready(function () {
+            $('.new-confession-btn').click(function () {
+                if ($(this).hasClass('no-login')){
+                    alert('为防止恶意行为，请登入后执行，但在这里不记录任何用户信息！');
+                    return false;
+                }
+                $new_confession_form = $('.new-confession-form');
+                $new_confession_form.fadeToggle();
+                $new_confession_form.find(".cancel").click(function () {
+                $new_confession_form.find("textarea").val('');
+                $new_confession_form.fadeOut();
+            });
+            // submit comment
+            $new_confession_form.find(".send").click(function (e) {
+                    e.preventDefault();
+                    var motion = $new_confession_form.find("select").val();
+                    var name = $new_confession_form.find('.confession-name').val();
+                    var content = $new_confession_form.find("textarea").val();
+                    if (content.length == 0){
+                        alert("不能为空哦！");
+                        window.location.reload();
+                        return false;
+                    }
+                    // use jquery post method
+                    $.post("{% url 'confession_wall:new_confession' %}",{
+                        motion: motion,
+                        name: name,
+                        content: content
+                    },
+                    function(data) {
+                        if (data['status'] == 'ok'){
+                            window.location.reload();
+                        }else {
+                            alert("评论出错");
+                            window.location.reload();
+                            return false;
+                        }
+                    });
+                });
+            });
+        });
+
+
+    </script>
+
+{% endblock %}
+

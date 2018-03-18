@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load custom_filter %}
+
+
+{% block header %}
+    <h3>关注的动态</h3>
+{% endblock %}
+
+{% block content %}
+    <ul class=" list-group note-list">
+        {% if actions %}
+             {% for action in actions %}
+                    {% if action.verb == 'new_post' %}
+                        {% with user=action.user post=action.target total_likes=action.target.user_like.count users_like=action.target.user_like.all %}
+                            <li class="list-group-item  note-list-item ">
+                                <div class="content">
+                                    <div class="author">
+                                        <a class="avatar " target="_blank" href="{{ post.author.get_absolute_url }}">
+                                        <img class="img-circle carousel-inne" src="{{ post.author.avatar.url }}" alt="头像" style="height: 32px; width: 32px">
+                                        </a>
+                                        <div class="info">
+                                            <a href="{{ post.author.get_absolute_url }}">
+                                            {% if post.author.nickname %}
+                                                {{ post.author.nickname }}
+                                            {% else %}
+                                                {{ post.author.username }}
+                                            {% endif %}
+                                            </a>
+                                                <span class="time" style="margin-left: 3px">发表了文章</span>
+                                                <span class="time" style="margin-left: 3px">{{ post.created|date:"Y.m.d H:i"}}</span>
+                                        </div>
+                                     </div>
+                                    <blockquote>
+                                        <a class="title" href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                                        <p class="abstract">{{ post.body|remove_markdown|truncatechars:24 }}...</p>
+                                        <div class="meta">
+                                        <span class="glyphicon glyphicon-eye-open"></span>
+                                        <span>{{ post.view_count }}</span>
+                                        <span style="margin-left: 10px" class="glyphicon glyphicon-comment"></span>
+                                        <span>{{ post.entry_comments.count }}</span>
+                                        <span style="margin-left: 10px" class="glyphicon glyphicon-heart"></span>
+                                        <span>{{ post.user_like.count }}</span>
+                                        </div>
+                                    </blockquote>
+                                </div>
+                            </li>
+                        {% endwith %}
+                    {% endif %}
+                {% endfor %}
+        {% else %}
+            <div class="jumbotron">
+                    <h4>暂无动态</h4>
+            </div>
+        {% endif %}
+    </ul>
+    <style type="text/css">
+        .note-list li{
+            margin: 0 0 17px;
+            padding: 0 2px 17px 0;
+            border-bottom: 1px solid #f0f0f0;
+            word-wrap: break-word;
+        }
+        .note-list-item .title{
+            margin: -7px 0 4px;
+            display: inherit;
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+        .note-list-item .author{
+            margin-bottom: 14px;
+            font-size: 13px;
+        }
+
+        .note-list-item{
+            border: none;
+        }
+        .note-list blockquote{
+            margin-bottom: 0;
+            color: #969696;
+            border-left: 3px solid #d9d9d9;
+        }
+        .note-list .abstract{
+                font-size: 13px;
+                line-height: 24px;
+        }
+        .info{
+            display: inline-block;
+            vertical-align: middle;
+            line-height: normal;
+            padding-left: 4px;
+        }
+        .meta{
+            padding-top: 2px;
+            font-size: 12px;
+            color: #969696;
+            line-height: normal;
+        }
+    </style>
+{% endblock %}

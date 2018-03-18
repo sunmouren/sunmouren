@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load custom_markdown %}
+{% load staticfiles %}
+
+{% block header %}
+    <h2>{{ post.title }}</h2>
+    {% if post.author.nickname %}
+        <span>{{ post.author.nickname }}</span>
+    {% else %}
+        <span>{{ post.author.username }}</span>
+    {% endif %}
+    <span>{{ post.created }}</span>
+{% endblock %}
+
+{% block content %}
+    {{ post.body|custom_markdown }}
+    <h5 class="page-header"></h5>
+    {% with total_likes=post.user_like.count users_like=post.user_like.all %}
+        <div>
+            <a class="btn btn-default heart {% if request.user.is_authenticated %}{% else %}no-login{% endif %} " data-id="{{ post.id }}",
+               data-action="{% if request.user in users_like %}un{% endif %}like"
+               {% if request.user in users_like %}style="background-color: rgb(212, 106, 64); color: white"{% endif %} >
+                <span class="glyphicon glyphicon-heart"></span>
+                <span class="count">{{ total_likes }}</span>
+            </a>
+            <div class="share pull-right">
+                <div class="bdsharebuttonbox"><a href="#" class="bds_more" data-cmd="more"></a><a href="#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间"></a><a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a><a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信"></a><a href="#" class="bds_sqq" data-cmd="sqq" title="分享到QQ好友"></a><a href="#" class="bds_douban" data-cmd="douban" title="分享到豆瓣网"></a></div>
+                <script>window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];</script>
+            </div>
+        </div>
+        <div id="comment-anchor">
+            {% include 'two_comment/comment_list.html' with entry=post %}
+        </div>
+
+    {% endwith %}
+
+    <style type="text/css">
+        .heart{
+            padding-top: 10px;
+            border: 1px solid #EA6F5A;
+            border-radius: 40px;
+        }
+    </style>
+{#    <script>#}
+{#        $(window).load(function () {#}
+{#            alert(sessionStorage.getItem('comment_anchor'));#}
+{#             if (sessionStorage.getItem('anchor')){#}
+{#                var offtop = sessionStorage.getItem('comment_anchor');#}
+{#                (document).scrollTop(offtop);#}
+{#                sessionStorage.removeItem('anchor');#}
+{#            }#}
+{#        });#}
+{#    </script>#}
+{% endblock %}
+
+
+
+{% block domready %}
+    $("a.heart").click(function (e) {
+        e.preventDefault();
+        $this = $(this);
+        if($this.hasClass('no-login')){
+            alert("请在登陆后执行该操作");
+            return false;
+        }
+        var id = $this.data('id');
+        var action = $this.data('action');
+
+        $.post('{% url 'forum:post_like' %}',{
+            id: id,
+            action: action
+        }, function (data) {
+
+            if (data['msg'] == 'ok'){
+                $this.data('action', action == 'like' ? 'unlike' : 'like');
+                var previous_likes = parseInt($('span.count').text());
+                if (action == 'like'){
+                    $this.attr("style","background-color: rgb(212, 106, 64); color: white");
+                    $this.find("span.count").text(previous_likes + 1);
+                }else if (action == 'unlike'){
+                    $this.attr("style","");
+                    $this.find("span.count").text(previous_likes - 1);
+                }
+            }
+        });
+    });
+{% endblock %}

@@ -1,0 +1,14 @@
+{% load comment_tags %}
+{% load bootstrap3 %}
+
+{% get_reply_form as form %}
+<form class="new-reply form" action=".">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+
+    <div class="reply-submit-function-block">
+        <a class="btn btn-success reply-send pull-right" data-id="{{ comment.id }}" role="button">发送</a>
+        <a class="btn btn-default reply-cancel pull-right" role="button">取消</a>
+    </div>
+</form>
+

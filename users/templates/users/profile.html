@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+{% load forum_tags %}
+{% load custom_filter %}
+{% load bootstrap3 %}
+
+{% block header %}
+    <a class="avatar" href="{{ user.get_absolute_url }}">
+        <img class="img-circle carousel-inner" src="{{ user.avatar.url }}" style="height: 85px; width: 85px">
+    </a>
+    <div class="info">
+        <a href="{{ user.get_absolute_url }}" style="font-size: 21px">
+            <strong>
+                {% if user.nickname %}
+                    {{ user.nickname }}
+                {% else %}
+                    {{ user.username }}
+                {% endif %}
+            </strong>
+        </a>
+        {% if request.user == user %}
+                <a class="edit-profile" href="{% url 'users:edit_profile' %}">
+                    <small>
+                        编辑资料
+                    </small>
+                </a>
+        {% endif %}
+        <div class="meta">
+            <span>关注 {{ user.following.count }}</span> | <span>粉丝 {{ user.followers.count }}</span> | <span>文章 {{ user.forum_posts.count }}</span>
+        </div>
+        <div class="meta">
+            <span>{{ user.signature }}</span>
+        </div>
+    </div>
+    {% if request.user == user %}
+    {% else %}
+        {% get_user_followers user as follower_followers %}
+        <a class="btn btn-default follow profile-follow {% if request.user.is_authenticated %}{% else %}no-login{% endif %} " data-id="{{ user.id }}",
+        data-action="{% if request.user in follower_followers %}un{% endif %}follow"
+        {% if request.user not in follower_followers %}style="background-color: #5cb85c; color: white" {% endif %}>
+            {% if request.user not in follower_followers %}
+                + 关注
+            {% else %}
+                已关注
+            {% endif %}
+        </a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+  <div>
+  <!-- Nav tabs -->
+  <ul class="nav nav-tabs" role="tablist">
+      {% get_user_followers_count user as followers_count %}
+      {% get_user_followings_count user as followings_count %}
+    <li role="presentation" class="active"><a href="#post" aria-controls="文章" role="tab" data-toggle="tab"><span class="glyphicon glyphicon-book" aria-hidden="true" style="margin-right: 3px"></span><strong>文章</strong></a></li>
+    <li role="presentation"><a href="#action" aria-controls="动态" role="tab" data-toggle="tab"><span class="glyphicon glyphicon-bell" aria-hidden="true" style="margin-right: 3px"></span><strong>动态</strong></a></li>
+    <li role="presentation"><a href="#followings" aria-controls="关注" role="tab" data-toggle="tab"><strong>关注<span aria-hidden="true" style="margin-left: 3px">{{ followings_count }}</span></strong></a></li>
+    <li role="presentation"><a href="#followers" aria-controls="粉丝" role="tab" data-toggle="tab"><strong>粉丝<span aria-hidden="true" style="margin-left: 3px">{{ followers_count }}</span></strong></a></li>
+  </ul>
+  <!-- Tab panes -->
+  <div class="tab-content">
+    <!-- 文章 -->
+    <div role="tabpanel" class="tab-pane active" id="post">
+        {% get_user_posts user as posts %}
+        <ul class="list-group note-list">
+            {% for post in posts %}
+                <li class="list-group-item  note-list-item">
+                    <div class="content">
+                        <div class="author">
+                        <a class="avatar "  href="{{ post.author.get_absolute_url }}">
+                            <img class="img-circle carousel-inne" src="{{ post.author.avatar.url }}" alt="头像" style="height: 32px; width: 32px">
+                        </a>
+                        <div class="info">
+                            <a href="{{ post.author.get_absolute_url }}">
+                                {% if post.author.nickname %}
+                                    {{ post.author.nickname }}
+                                {% else %}
+                                    {{ post.author.username }}
+                                {% endif %}
+                            </a>
+                            <span class="time" style="margin-left: 3px">{{ post.created|timesince }}前</span>
+                        </div>
+                    </div>
+                            <a class="title" href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                            <p class="abstract">{{ post.body|remove_markdown|truncatechars:25 }}</p>
+                        <div class="meta">
+                            <span class="glyphicon glyphicon-eye-open"></span>
+                            <span>{{ post.view_count }}</span>
+                            <span style="margin-left: 10px" class="glyphicon glyphicon-comment"></span>
+                            <span>{{ post.entry_comments.count }}</span>
+                            <span style="margin-left: 10px" class="glyphicon glyphicon-heart"></span>
+                            <span>{{ post.user_like.count }}</span>
+                            {% if request.user == post.author %}
+                                <a href="{% url 'forum:edit_post' post.id %}" style="margin-left: 10px">
+                                    <span  class="glyphicon glyphicon-edit"></span>
+                                    <small>编辑</small>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <!-- 动态 -->
+    <div role="tabpanel" class="tab-pane" id="action">
+        {% get_user_action user as actions %}
+            <ul class=" list-group note-list">
+                {% for action in actions %}
+                    {% if action.verb == 'new_post' %}
+                        {% with user=action.user post=action.target total_likes=action.target.user_like.count users_like=action.target.user_like.all %}
+                            <li class="list-group-item  note-list-item ">
+                                <div class="content">
+                                    <div class="author">
+                                        <a class="avatar "  href="{{ post.author.get_absolute_url }}">
+                                        <img class="img-circle carousel-inne" src="{{ post.author.avatar.url }}" alt="头像" style="height: 32px; width: 32px">
+                                        </a>
+                                        <div class="info">
+                                            <a href="{{ post.author.get_absolute_url }}">
+                                            {% if post.author.nickname %}
+                                                {{ post.author.nickname }}
+                                            {% else %}
+                                                {{ post.author.username }}
+                                            {% endif %}
+                                            </a>
+                                            <span class="time" style="margin-left: 3px">发表了文章</span>
+                                            <span class="time" style="margin-left: 3px">{{ post.created|date:"Y.m.d H:i"}}</span>
+                                        </div>
+                                     </div>
+                                    <blockquote>
+                                        <a class="title"  href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                                        <p class="abstract">{{ post.body|remove_markdown|truncatechars:25 }}</p>
+                                        <div class="meta">
+                                        <span class="glyphicon glyphicon-eye-open"></span>
+                                        <span>{{ post.view_count }}</span>
+                                        <span style="margin-left: 10px" class="glyphicon glyphicon-comment"></span>
+                                        <span>{{ post.entry_comments.count }}</span>
+                                        <span style="margin-left: 10px" class="glyphicon glyphicon-heart"></span>
+                                        <span>{{ post.user_like.count }}</span>
+                                        </div>
+                                    </blockquote>
+                                </div>
+                            </li>
+                        {% endwith %}
+                    {% endif %}
+                {% endfor %}
+            </ul>
+    </div>
+    <!-- 关注 -->
+    <div role="tabpanel" class="tab-pane" id="followings" >
+        {% get_user_followings user as followings %}
+        <ul class="list-group note-list">
+            {% for following in followings %}
+                <li class="list-group-item  note-list-item">
+                    <a class="avatar"  href="{{ following.get_absolute_url }}">
+                        <img class="avatar img-circle carousel-inner" src="{{ following.avatar.url }}" style="width: 52px; height: 52px;" alt="头像">
+                    </a>
+                    <div class="info">
+                        <a href="{{ following.get_absolute_url }}">
+                            <strong>
+                                {% if following.nickname %}
+                                    {{ following.nickname }}
+                                {% else %}
+                                    {{ following.username }}
+                                {% endif %}
+                            </strong>
+                        </a>
+                        <div class="meta">
+                            <span>关注 {{ following.following.count }}</span> | <span>粉丝 {{ following.followers.count }}</span> | <span>文章 {{ following.forum_posts.count }}</span>
+                        </div>
+                        <div class="meta">
+                            <span>{{ following.signature }}</span>
+                        </div>
+                    </div>
+                    {% if following != request.user %}
+                        {% get_user_followers following as following_followers %}
+                        <a class="btn btn-default follow following-follow {% if request.user.is_authenticated %}{% else %}no-login{% endif %} " data-id="{{ following.id }}",
+                        data-action="{% if request.user in following_followers %}un{% endif %}follow"
+                        {% if request.user not in following_followers %}style="background-color: #5cb85c; color: white" {% endif %}>
+                        {% if request.user not in following_followers %}
+                            + 关注
+                        {% else %}
+                            已关注
+                        {% endif %}
+                        </a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+          </ul>
+    </div>
+    <!-- 粉丝 -->
+    <div role="tabpanel" class="tab-pane" id="followers">
+        {% get_user_followers user as followers %}
+          <ul class="list-group note-list">
+            {% for follower in followers %}
+                <li class="list-group-item  note-list-item">
+                    <a class="avatar" href="{{ follower.get_absolute_url }}">
+                        <img class="img-circle carousel-inner" src="{{ follower.avatar.url }}" style="width: 52px; height: 52px;" >
+                    </a>
+                    <div class="info">
+                        <a href="{{ follower.get_absolute_url }}">
+                            <strong>
+                                {% if follower.nickname %}
+                                    {{ follower.nickname }}
+                                {% else %}
+                                    {{ follower.username }}
+                                {% endif %}
+                            </strong>
+                        </a>
+                        <div class="meta">
+                            <span>关注 {{ follower.following.count }}</span> | <span>粉丝 {{ follower.followers.count }}</span> | <span>文章 {{ follower.forum_posts.count }}</span>
+                        </div>
+                        <div class="meta">
+                            <span>{{ follower.signature }}</span>
+                        </div>
+                    </div>
+                    {% if follower != request.user %}
+                        {% get_user_followers follower as follower_followers %}
+                        <a class="btn btn-default follow follower-follow {% if request.user.is_authenticated %}{% else %}no-login{% endif %} " data-id="{{ follower.id }}",
+                           data-action="{% if request.user in follower_followers %}un{% endif %}follow"
+                           {% if request.user not in follower_followers %}style="background-color: #5cb85c; color: white" {% endif %}>
+                            {% if request.user not in follower_followers %}
+                                + 关注
+                            {% else %}
+                                已关注
+                            {% endif %}
+                        </a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+          </ul>
+    </div>
+  </div>
+</div>
+    <style type="text/css">
+        .note-list li{
+            margin: 0 0 17px;
+            padding: 0 2px 17px 0;
+            border-bottom: 1px solid #f0f0f0;
+            word-wrap: break-word;
+        }
+        .note-list-item, .title{
+            margin: -7px 0 4px;
+            display: inherit;
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+        .note-list-item .author{
+            margin-bottom: 14px;
+            font-size: 13px;
+        }
+
+        .note-list-item{
+            border: none;
+        }
+        .note-list blockquote{
+            margin-bottom: 0;
+            color: #969696;
+            border-left: 3px solid #d9d9d9;
+        }
+        .note-list .abstract{
+            font-size: 14px;
+        }
+        .tab-pane{
+            margin-top: 18px;
+        }
+        .info{
+            display: inline-block;
+            vertical-align: middle;
+            line-height: normal;
+            padding-left: 5px;
+        }
+        .meta{
+            padding-top: 2px;
+            font-size: 12px;
+            color: #969696;
+            line-height: normal;
+        }
+        .follow{
+            display: inline-block;
+            float: right;
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: 400;
+            line-height: normal;
+        }
+        .edit-profile{
+            padding-top: 14px;
+            padding-left: 5px;
+        }
+    </style>
+{% endblock content %}
+
+
+{% block domready %}
+
+    $("a.profile-follow").click(function (e) {
+        e.preventDefault();
+        $this = $(this);
+        if($this.hasClass('no-login')){
+            alert("请在登陆后执行该操作");
+            return false;
+        }
+        var id = $this.data('id');
+        var action = $this.data('action');
+
+        $.post('{% url 'users:follow' %}',{
+            id: id,
+            action: action
+        }, function (data) {
+            if (data['msg'] == 'ok'){
+                $this.data('action', action == 'follow' ? 'unfollow' : 'follow');
+                if (action == 'follow'){
+                    $this.attr("style", "");
+                    $this.text('已关注')
+                }else if (action == 'unfollow'){
+                    $this.attr("style", "background-color: #5cb85c; color: white");
+                    $this.text('+ 关注')
+                }
+            }
+        });
+    });
+
+    $("a.follower-follow").click(function (e) {
+        e.preventDefault();
+        $this = $(this);
+        if($this.hasClass('no-login')){
+            alert("请在登陆后执行该操作");
+            return false;
+        }
+        var id = $this.data('id');
+        var action = $this.data('action');
+
+        $.post('{% url 'users:follow' %}',{
+            id: id,
+            action: action
+        }, function (data) {
+            if (data['msg'] == 'ok'){
+                $this.data('action', action == 'follow' ? 'unfollow' : 'follow');
+                if (action == 'follow'){
+                    $this.attr("style", "");
+                    $this.text('已关注')
+                }else if (action == 'unfollow'){
+                    $this.attr("style", "background-color: #5cb85c; color: white");
+                    $this.text('+ 关注')
+                }
+            }
+        });
+    });
+
+    $("a.following-follow").click(function (e) {
+        e.preventDefault();
+        $this = $(this);
+        if($this.hasClass('no-login')){
+            alert("请在登陆后执行该操作");
+            return false;
+        }
+        var id = $this.data('id');
+        var action = $this.data('action');
+
+        $.post('{% url 'users:follow' %}',{
+            id: id,
+            action: action
+        }, function (data) {
+            if (data['msg'] == 'ok'){
+                $this.data('action', action == 'follow' ? 'unfollow' : 'follow');
+                if (action == 'follow'){
+                    $this.attr("style", "");
+                    $this.text('已关注')
+                }else if (action == 'unfollow'){
+                    $this.attr("style", "background-color: #5cb85c; color: white");
+                    $this.text('+ 关注')
+                }
+            }
+        });
+    });
+
+{% endblock %}
+

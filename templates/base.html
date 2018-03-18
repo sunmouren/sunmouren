@@ -1,0 +1,124 @@
+{% load bootstrap3 %}
+{% load staticfiles %}
+{% load notifications_tags %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1,maximum-scale=1,user-scalable=no">
+    <title>小海狮</title>
+
+    <link rel="stylesheet" href="{% static 'forum/css/highlights/github.css' %}">
+
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+
+
+      {% block link %}
+      {% endblock %}
+  </head>
+  
+  <body style="padding-top: 65px">
+
+    <!-- Static navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top" >
+      <div class="container-fluid">
+          
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed"
+              data-toggle="collapse" data-target="#navbar"
+              aria-expanded="false" aria-controls="navbar">
+              <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+             <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{% url 'forum:post_list' %}">小海狮</a>
+        </div>
+        
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav" style="display: inline-block;float: none;">
+            <li><a href="{% url 'forum:post_list' %}">发现</a></li>
+              {% if request.user.is_authenticated %}
+                <li>
+                    <a href="{% url 'users:following_actions' %}">关注</a>
+                </li>
+              {% endif %}
+
+              <li>
+                  <a href="{% url 'confession_wall:get_confessions' %}">表白墙</a>
+              </li>
+          </ul>
+
+          <ul class="nav navbar-nav navbar-right">
+
+              {% if request.user.is_authenticated %}
+                  {% notifications_unread as unread_count %}
+                  <li>
+                      <a href="{% url 'notifications:unread' %}">
+                          <span class="glyphicon glyphicon-bell"></span>
+                          <span class="badge" style="background-color: #ea6f5a; margin-top: -6px">{% if unread_count > 0 %}{{ unread_count }}{% endif %}</span>
+                      </a>
+                  </li>
+                  <li>
+                      <a href="{% url 'forum:new_post' %}">写文章</a>
+                  </li>
+
+                  <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                        <img class="img-circle carousel-inner" src="{{ request.user.avatar.url }}" style="width: 40px; height: 40px; margin-top: -18px; margin-bottom: -18px" alt="头像">
+                        <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{{ request.user.get_absolute_url }}">个人主页</a></li>
+                        <li class="divider"></li>
+                        <li><a href="{% url 'users:logout' %}">注销</a></li>
+                    </ul>
+                  </li>
+              {% else %}
+                  <li><a href="{% url 'users:register' %}">注册</a></li>
+                  <li><a href="{% url 'users:login' %}">登录</a></li>
+              {% endif %}
+
+        </ul>
+
+
+        </div><!--/.nav-collapse -->
+        
+      </div>
+    </nav>
+    
+    <div class="container">
+        <div class="row">
+            <div class="col-md-9">
+                 <div class="page-header">
+                     {% block header %}{% endblock %}
+                </div>
+            <div>
+                 {% block content %}{% endblock %}
+            </div>
+            </div>
+
+            <div class="col-md-3">
+
+                {% block sidebar %}
+
+                {% endblock %}
+        </div>
+
+    </div> <!-- /container -->
+
+
+
+
+    <script>
+        $.ajaxSetup({
+            data: { csrfmiddlewaretoken: '{{ csrf_token }}' },
+        });
+        $(document).ready(function () {
+            {% block domready %}
+            {% endblock %}
+        });
+    </script>
+  </body>
+</html>

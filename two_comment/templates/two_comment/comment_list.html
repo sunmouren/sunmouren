@@ -1,0 +1,299 @@
+{% load comment_tags %}
+{% load bootstrap3 %}
+
+<div class="comment-list" id="comment-list">
+        {% get_comment_form as form %}
+        <div>
+            {% if request.user.is_authenticated %}
+                <form class="new-comment" action=".">
+                    {% csrf_token %}
+                    {% bootstrap_form form %}
+                    <div class="submit-function-block">
+                        <a class="btn btn-success send pull-right" data-id="{{ entry.id }}" role="button">发送</a>
+                        <a class="btn btn-default cancel pull-right" role="button">取消</a>
+                    </div>
+                 </form>
+            {% else %}
+                <div class="jumbotron no-reply">
+                    <h4>登录后发布评论</h4>
+                </div>
+            {% endif %}
+        </div>
+
+        <div id="normal-comment-list" class="normal-comment-list">
+            {% get_comment_list entry as comments %}
+            {% if comments.count > 0 %}
+                <div class="top-title">
+                    <span>{{ comments.count }}</span>
+                    <span>条评论</span>
+                </div>
+                {% for comment in comments %}
+                    <div>
+                        <div id="comment-{{ comment.id }}" class="comment">
+                            <div>
+                                <div class="author">
+                                     <a class="avatar" href="{{ comment.author.get_absolute_url }}">
+                                        <img class="img-circle carousel-inner" src="{{ comment.author.avatar.url }}" style="width: 38px; height: 38px;" >
+                                    </a>
+                                    <div class="info">
+                                        <a href="{{ comment.author.get_absolute_url }}">
+                                            <strong>
+                                                {% if comment.author.nickname %}
+                                                {{ comment.author.nickname }}
+                                            {% else %}
+                                                {{ comment.author.username }}
+                                            {% endif %}
+                                            </strong>
+                                        </a>
+                                        <div class="meta">
+                                            <span>{{ comment.submit_date }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="comment-wrap">
+                                    <p>{{ comment.content }}</p>
+                                </div>
+                                 <div class="tool-group">
+                                 {% with users_favour=comment.user_favour.all %}
+                                     <a class="favour-button {% if not request.user.is_authenticated %}no-login{% endif %}"
+                                        data-id="{{ comment.id }}" data-action="{% if request.user in users_like %}dis{% endif %}favour"
+                                        {% if request.user in users_favour %}style="color: #ea6f5a"{% endif %}>
+                                         <span class="glyphicon glyphicon-thumbs-up"></span>
+                                     </a>
+                                     <small>赞</small>
+                                 {% endwith %}
+                                     <a class="reply-button {% if not request.user.is_authenticated %}no-login{% endif %}" data-to="{{ comment.author.id }}" data-comment="{{ comment.id }}">
+                                        <small><span class="glyphicon glyphicon-comment"></span></small>
+                                     </a>
+                                     <small>回复</small>
+                                 </div>
+                            </div>
+
+                        {% get_reply_list comment as replies %}
+                            {% if replies %}
+                                <div class="normal-reply-list">
+                                {% for reply in replies %}
+                                    <div id="reply-{{ reply.id }}" class="reply">
+                                        <p>
+                                           <span>
+                                                <a href="{{ reply.author_from.get_absolute_url }}">{{ reply.author_from.username }}</a>:
+                                           </span>
+                                            <span>
+                                                <a href="{{ reply.author_to.get_absolute_url }}">@{{ reply.author_to.username }}</a>
+                                                {{ reply.content }}
+                                            </span>
+                                        </p>
+
+                                        <div class="reply-tool-group">
+                                            <span>{{ reply.submit_date }}</span>
+                                            <a class="reply-button {% if not request.user.is_authenticated %}no-login{% endif %}" data-to="{{ comment.author.id }}" data-comment="{{ comment.id }}">
+                                                <span class="glyphicon glyphicon-comment"></span>
+                                            </a>
+                                            <small>回复</small>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                                    <div class="reply-form">
+                                        {% include 'two_comment/reply_form.html' %}
+                                    </div>
+                                </div>
+                        </div>
+                {% endfor %}
+            {% else %}
+                <div class="jumbotron no-reply">
+                    <h4>暂无评论，来抢沙发</h4>
+                </div>
+            {% endif %}
+            </div>
+        </div>
+</div>
+
+        <style type="text/css">
+
+            .author{
+                margin-bottom: 15px;
+            }
+            .info{
+                display: inline-block;
+                vertical-align: middle;
+                padding-left: 4px;
+            }
+            .meta{
+                font-size: 12px;
+                color: #969696;
+            }
+            .comment-list{
+                padding-top: 20px;
+            }
+            .submit-function-block{
+                display: none;
+            }
+            .cancel, .reply-cancel{
+                margin-right: 18px;
+            }
+
+            .normal-comment-list{
+                margin-top: 40px;
+            }
+            .top-title{
+                padding-bottom: 18px;
+                font-size: 17px;
+                font-weight: 700;
+                border-bottom: 1px solid #f0f0f0;
+            }
+             .comment{
+                padding: 20px 0 30px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .normal-reply-list{
+                margin-top: 20px;
+                padding: 5px 0 5px 20px;
+                border-left: 2px solid #d9d9d9;
+            }
+            .reply{
+                margin-bottom: 15px;
+                padding-bottom: 15px;
+                border-bottom: 1px dashed #f0f0f0;
+            }
+            .reply-form{
+                display: none;
+            }
+            .reply-tool-group{
+                font-size: 12px;
+                color: #969696;
+            }
+            .reply-button{
+                margin-left: 10px;
+                color: #969696;
+            }
+            .favour-button{
+                color: #969696;
+            }
+            .reply-form{
+                padding-bottom: 10px;
+                padding-top: 5px;
+            }
+        </style>
+
+
+        <script>
+        $(window).load(function () {
+            if(sessionStorage.getItem('anchor')){
+                var offtop = sessionStorage.getItem('new_comment_location');
+                $(document).scrollTop(offtop);
+                window.location.hash = sessionStorage.getItem('new_comment_location');
+                sessionStorage.removeItem('anchor');
+            }
+        });
+        $.ajaxSetup({
+            data: { csrfmiddlewaretoken: '{{ csrf_token }}' },
+        });
+        $(document).ready(function () {
+                // new-comment
+                $("form.new-comment").focusin(function () {
+                    $this = $(this);
+                    $this.find(".submit-function-block").show();
+                    $this.find(".cancel").click(function () {
+                        $this.find(".submit-function-block").hide();
+                        $this.find("textarea").val('');
+                    });
+                    // submit comment
+                    $this.find(".send").click(function (e) {
+                        e.preventDefault();
+                        var id = $(this).data("id");
+                        var content = $this.find("textarea").val();
+                        if (content.length == 0){
+                            alert("评论不能为空！！");
+                            window.location.reload();
+                            return false;
+                        }
+                        // use jquery post method
+                        $.post("{% url 'two_comment:submit_comment' %}",{
+                            id: id,
+                            content: content
+                        },
+                        function(data) {
+                            if (data['status'] == 'ok'){
+                                sessionStorage.setItem('anchor', true);
+                                sessionStorage.setItem('new_comment_location',
+                                data['new_comment_location']);
+                                window.location.reload();
+                            }else {
+                                alert("评论出错");
+                                window.location.reload();
+                                return false;
+                            }
+                        });
+                    });
+                });
+
+            // reply-form
+            $("a.reply-button").click(function () {
+                $reply_button = $(this);
+                if ($reply_button.hasClass('no-login')){
+                    alert('登陆后才能回复');
+                    return false;
+                }
+                var comment_id = "#comment-" + $reply_button.data('comment');
+                $reply_form = $(comment_id).find(".reply-form");
+                $reply_form.fadeToggle();
+                $reply_form.find(".reply-cancel").click(function () {
+                    $reply_form.find("textarea").val('');
+                    $reply_form.fadeOut();
+                });
+                // submit reply
+                $reply_form.find(".reply-send").click(function (e) {
+                    e.preventDefault();
+                    var comment = $reply_button.data('comment');
+                    var author_to_id = $reply_button.data("to");
+                    var content = $reply_form.find("textarea").val();
+                    if (content.length == 0){
+                        alert("回复不能为空！！");
+                        window.location.reload();
+                        return false;
+                    }
+                    // use jquery post method
+                    $.post("{% url 'two_comment:submit_reply' %}", {
+                        author_to_id: author_to_id,
+                        comment_id: comment,
+                        content: content
+                    },function (data) {
+                        if(data['status'] == 'ok'){
+                            window.location.reload();
+                        }else {
+                            alert("回复出错");
+                            window.location.reload();
+                            return false;
+                        }
+                    });
+                });
+            });
+
+            // comment favour
+            $("a.favour-button").click(function (e) {
+                e.preventDefault();
+                $this = $(this);
+                if($this.hasClass("no-login")){
+                    alert("抱歉，您还没有登录喔!");
+                    return false;
+                }
+                var id = $this.data('id');
+                var action = $this.data('action');
+
+                $.post("{% url 'two_comment:submit_favour' %}", {
+                    id: id,
+                    action: action
+                }, function (data) {
+                    if (data['status'] == 'ok'){
+                        $this.data('action', action == 'favour' ? 'disfavour' : 'favour');
+                        if (action == 'favour'){
+                            $this.attr("style", "color: #ea6f5a");
+                        }else if(action == 'disfavour'){
+                            $this.attr("style", "");
+                        }
+                    }
+                });
+            });
+        });
+        </script>

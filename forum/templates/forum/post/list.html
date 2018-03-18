@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load forum_tags %}
+
+{% block header %}
+   <blockquote>
+        <h3>崇德尚学，求实创新。</h3>
+    </blockquote>
+{% endblock %}
+
+{% block content %}
+        <ul class="list-group note-list post_list ">
+            {% include "forum/post/list_ajax.html" %}
+        </ul>
+    <style type="text/css">
+        .note-list li{
+            margin: 0 0 17px;
+            padding: 0 2px 17px 0;
+            border-bottom: 1px solid #f0f0f0;
+            word-wrap: break-word;
+        }
+        .note-list-item .title{
+            margin: -7px 0 4px;
+            display: inherit;
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+        .note-list-item .author{
+            margin-bottom: 14px;
+            font-size: 13px;
+        }
+         .note-list-item .abstract{
+            line-height: 24px;
+        }
+
+        .note-list-item{
+            border: none;
+        }
+        .note-list blockquote{
+            margin-bottom: 0;
+            color: #969696;
+            border-left: 3px solid #d9d9d9;
+        }
+        .info{
+            display: inline-block;
+            vertical-align: middle;
+            line-height: normal;
+            padding-left: 5px;
+        }
+        .meta{
+            padding-top: 2px;
+            font-size: 12px;
+            color: #969696;
+            line-height: normal;
+        }
+    </style>
+
+
+{#    <script>#}
+{#       $(document).ready(function () {#}
+{#           $('.comment-count').click(function () {#}
+{#               var comment_anchor = "#comment-anchor";#}
+{#               sessionStorage.setItem('anchor', true);#}
+{#               sessionStorage.setItem('comment_anchor', comment_anchor);#}
+{#           });#}
+{#       });#}
+{#    </script>#}
+{% endblock %}
+
+{% block sidebar %}
+     <div class="list-group">
+         {% get_most_popular_post as poplular_post_list %}
+         <a class="list-group-item list-group-item-danger"><h5>最受欢迎文章</h5></a>
+         {% for post in poplular_post_list %}
+             <a href="{{ post.get_absolute_url }}" class="list-group-item">
+                 <span class="badge" style="background-color: #EA6F5A">
+                     <span style="color: #f6feff" class="glyphicon glyphicon-heart"></span>
+                     <span>{{ post.total_like }}</span>
+                 </span>
+                 {{ post.title }}
+             </a>
+         {% empty %}
+             <a class="list-group-item">暂时没有排行</a>
+         {% endfor %}
+     </div>
+{% endblock %}
+
+
+{% block domready %}
+    var page = 1;
+    var empty_page = false;
+    var block_request = false;
+
+    $(window).scroll(function() {
+        var margin = $(document).height() - $(window).height() - 200;
+        if  ($(window).scrollTop() > margin && empty_page == false && block_request == false) {
+            block_request = true;
+            page += 1;
+            $.get('?page=' + page, function(data) {
+                if(data == '')
+                {
+                    empty_page = true;
+                }
+                else {
+                    block_request = false;
+                    $('.post_list').append(data);
+                }
+            });
+        }
+    });
+{% endblock %}

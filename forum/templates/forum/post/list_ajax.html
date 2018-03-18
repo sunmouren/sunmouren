@@ -1,0 +1,41 @@
+{% load custom_filter %}
+
+
+{% for post in posts %}
+    {% with total_likes=post.user_like.count users_like=post.user_like.all view_count=post.view_count %}
+        <li class="list-group-item  note-list-item">
+            <div class="content">
+                <div class="author">
+                        <a class="avatar " href="{{ post.author.get_absolute_url }}">
+                            <img class="img-circle carousel-inne" src="{{ post.author.avatar.url }}" alt="头像" style="height: 32px; width: 32px">
+                        </a>
+                        <div class="info">
+                            <a href="{{ post.author.get_absolute_url }}">
+                                {% if post.author.nickname %}
+                                    {{ post.author.nickname }}
+                                {% else %}
+                                    {{ post.author.username }}
+                                {% endif %}
+                            </a>
+                            <span class="time" style="margin-left: 3px">{{ post.created|timesince }}前</span>
+                        </div>
+                    </div>
+                <a class="title"  href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                <p class="abstract">{{ post.body|remove_markdown|truncatechars:128}}</p>
+                <div class="meta">
+                    <span class="glyphicon glyphicon-eye-open"></span>
+                    <span>{{ view_count }}</span>
+                    <span style="margin-left: 10px">
+                        <a href="{{ post.get_absolute_url }}" style="color: #969696;" class="comment-count">
+                            <span  class="glyphicon glyphicon-comment"></span>
+                            <span>{{ post.entry_comments.count }}</span>
+                        </a>
+                    </span>
+
+                    <span style="margin-left: 10px" class="glyphicon glyphicon-heart"></span>
+                    <span>{{ total_likes }}</span>
+                </div>
+            </div>
+        </li>
+    {% endwith %}
+{% endfor %}
