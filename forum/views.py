@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse, Http404
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.decorators.http import require_POST
@@ -77,6 +77,8 @@ def post_like(request):
 @login_required
 def edit_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
+    if post.author != request.user:
+        raise Http404
     if request.method != 'POST':
         form = PostForm(instance=post)
     else:
