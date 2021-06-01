@@ -48,6 +48,6 @@ requests-oauthlib==0.8.0
 six==1.11.0
 timeago==1.0.7
 Unidecode==0.4.21
-urllib3==1.22
+urllib3==1.26.5
 Werkzeug==0.12.2
 Whoosh==2.7.4
