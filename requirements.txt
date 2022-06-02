@@ -28,7 +28,7 @@ django-simple-captcha==0.5.3
 django-taggit==0.21.3
 djangoajax==2.4
 Flask==0.12.2
-html5lib==0.9999999
+html5lib==0.99999999
 idna==2.6
 itsdangerous==0.24
 jieba==0.39
