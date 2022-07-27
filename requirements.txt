@@ -7,7 +7,7 @@ Django==1.10.4
 -e git+https://github.com/zmrenwu/django-activity-stream.git@c0b0448c2941f7cb350ed4b97ffe9eeeb3bc456e#egg=django_activity_stream
 django-ajax==0.2.0
 django-allauth==0.29.0
-django-anymail==0.10
+django-anymail==1.2.1
 django-appconf==1.0.2
 django-autoslug==1.9.3
 django-bootstrap-pagination==1.6.2
